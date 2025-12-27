@@ -61,6 +61,7 @@ function mapStateToProps(state: GlobalState) {
         isFlaggedPosts: rhsState === RHSStates.FLAG,
         isPinnedPosts: rhsState === RHSStates.PIN,
         isChannelFiles: rhsState === RHSStates.CHANNEL_FILES,
+        isUnreadAll: rhsState === RHSStates.UNREAD_ALL,
         isMobileView,
         crossTeamSearchEnabled,
     };

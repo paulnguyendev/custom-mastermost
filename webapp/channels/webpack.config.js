@@ -96,8 +96,10 @@ var config = {
                     {
                         loader: 'sass-loader',
                         options: {
+                            warnRuleAsWarning: false,
                             sassOptions: {
                                 loadPaths: ['src/sass'],
+                                silenceDeprecations: ['mixed-decls', 'import', 'global-builtin'],
                             },
                         },
                     },
@@ -133,10 +135,12 @@ var config = {
         alias: {
             'mattermost-redux/test': 'packages/mattermost-redux/test',
             'mattermost-redux': 'packages/mattermost-redux/src',
-            '@mui/styled-engine': '@mui/styled-engine-sc',
 
             // This alias restricts single version of styled components across all packages
             'styled-components': path.resolve(__dirname, '..', 'node_modules', 'styled-components'),
+
+            // Force @mui/styled-engine to resolve to the correct version with internal_serializeStyles
+            '@mui/styled-engine': path.resolve(__dirname, '..', 'node_modules', '@mui', 'styled-engine'),
         },
         extensions: ['.ts', '.tsx', '.js', '.jsx'],
         fallback: {
@@ -149,6 +153,14 @@ var config = {
         hints: 'warning',
     },
     target: 'web',
+    ignoreWarnings: [
+        // Ignore MUI styled-engine internal_serializeStyles warning (version mismatch issue)
+        /export 'internal_serializeStyles'.*was not found in '@mui\/styled-engine'/,
+        // Ignore Sass deprecation warnings
+        /Deprecation Warning/,
+        /Sass @import rules are deprecated/,
+        /Sass's behavior for declarations that appear after nested/,
+    ],
     plugins: [
         new webpack.ProvidePlugin({
             process: 'process/browser.js',
@@ -457,6 +469,13 @@ if (targetIsDevServer) {
             },
             historyApiFallback: {
                 index: '/static/root.html',
+            },
+            client: {
+                logging: 'warn',
+                overlay: {
+                    errors: true,
+                    warnings: false,
+                },
             },
         },
         performance: false,

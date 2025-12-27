@@ -1030,6 +1030,15 @@ export const getAllTeamsUnreadChannelIds: (state: GlobalState) => string[] = cre
     },
 );
 
+// Get total unread count across all teams for badge display
+export const getAllTeamsUnreadCount: (state: GlobalState) => number = createSelector(
+    'getAllTeamsUnreadCount',
+    getAllTeamsUnreadChannelIds,
+    (unreadChannelIds: string[]): number => {
+        return unreadChannelIds.length;
+    },
+);
+
 export const getUnreadChannels: (state: GlobalState, lastUnreadChannel?: Channel | null) => Channel[] = createIdsSelector(
     'getUnreadChannels',
     getCurrentUser,

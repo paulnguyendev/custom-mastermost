@@ -547,15 +547,22 @@
     overflow: hidden;
     max-width: 100%;
     padding: 8px 0.5em 0 1.5em; // If this needs to be changed then .post-row__padding needs to be adjusted accordingly
-    transition: height 200ms, background-color 200ms;
+    transition: height 200ms;
     word-wrap: break-word;
 
+    // Disable all hover background effects
     &:not(.post--editing):not(.post--editing):hover {
-        background-color: rgba(functions.v(center-channel-color-rgb), 0.04);
+        background-color: transparent !important;
+        background: transparent !important;
 
         .PostAttachmentOpenGraph .remove-button {
             display: flex;
         }
+    }
+
+    &:hover {
+        background-color: transparent !important;
+        background: transparent !important;
     }
 
     .hide-element {
@@ -672,9 +679,6 @@
             visibility: visible;
         }
 
-        .post__body {
-            background: transparent !important;
-        }
     }
 
     &.post--hide-controls {
@@ -1402,24 +1406,93 @@
             padding-right: 20px !important;
         }
 
+        // Disable all hover effects on post__body
+        .post:hover &,
+        .post:not(.post--editing):hover &,
+        .post.current--user:hover &,
+        .post:not(.current--user):not(.post--system):hover &,
+        .post:hover .post__content > div:not(.post__img) &,
+        .post.current--user:hover .post__content > div:not(.post__img) &,
+        .post:not(.current--user):not(.post--system):hover .post__content > div:not(.post__img) & {
+            background-color: inherit !important;
+        }
+
+
+        // Override markdown heading sizes for chat messages
+        h1.markdown__heading {
+            font-size: 16px;
+            margin: 4px 0 3px;
+            line-height: 1.35;
+        }
+
+        h2.markdown__heading {
+            font-size: 15px;
+            margin: 4px 0 3px;
+            line-height: 1.35;
+        }
+
+        h3.markdown__heading {
+            font-size: 14px;
+            margin: 4px 0 2px;
+            line-height: 1.35;
+        }
+
+        h4.markdown__heading {
+            font-size: 13px;
+            margin: 3px 0 2px;
+            line-height: 1.35;
+        }
+
+        h5.markdown__heading {
+            font-size: 12px;
+            margin: 3px 0 2px;
+            line-height: 1.35;
+        }
+
+        h6.markdown__heading {
+            font-size: 11px;
+            margin: 3px 0 2px;
+            line-height: 1.35;
+        }
+
+        .markdown__heading {
+            margin: 4px 0 3px;
+            line-height: 1.35;
+
+            &:first-child {
+                margin: 2px 0 4px;
+            }
+        }
+
+        p {
+            margin: 0.25em 0;
+            line-height: 2;
+        }
+
         p + p {
-            margin: 0.5em 0 0;
+            margin: 0.25em 0 0;
         }
 
         ul,
         ol {
+            margin: 0.25em 0;
+            padding-left: 14px;
+
             p {
                 margin-bottom: 0;
             }
 
             li {
+                margin: 0.15em 0;
+                line-height: 2;
+
                 p {
                     display: inline;
                 }
 
                 ul {
-                    padding: 0 0 0 20px;
-                    margin: 0;
+                    padding: 0 0 0 14px;
+                    margin: 0.15em 0;
                     font-size: 1em;
                 }
             }
@@ -1427,12 +1500,12 @@
 
         ul + p,
         ol + p {
-            margin-top: 0.6em;
+            margin-top: 0.3em;
         }
 
         p + ul,
         p + ol {
-            margin-top: 0.6em;
+            margin-top: 0.3em;
         }
 
         .pending-post-actions {
@@ -2213,7 +2286,14 @@
 }
 
 .post--pinned-or-flagged {
-    background-color: rgb(var(--pinned-highlight-bg-mixed-rgb));
+    .post__body {
+        background-color: rgb(var(--pinned-highlight-bg-mixed-rgb)) !important;
+    }
+
+    &.current--user .post__content > div:not(.post__img) .post__body,
+    &:not(.current--user):not(.post--system) .post__content > div:not(.post__img) .post__body {
+        background-color: rgb(var(--pinned-highlight-bg-mixed-rgb)) !important;
+    }
 
     .post-collapse {
         .post-collapse__show-more,
@@ -2227,7 +2307,62 @@
     display: none;
 }
 
+// Chat bubble alignment: current user on right, others on left
+.post:not(.current--user):not(.post--system) {
+    margin-bottom: 12px;
+
+    .post__content {
+        > div:not(.post__img) {
+            width: fit-content;
+            max-width: 65%;
+            min-width: 100px;
+
+            .post__body {
+                background-color: rgba(var(--center-channel-color-rgb), 0.08);
+                border-radius: 16px;
+                padding: 10px 14px;
+            }
+        }
+    }
+}
+
 .post.current--user {
+    margin-bottom: 12px;
+
+    .post__content {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-start;
+
+        .post__img {
+            order: -1;
+            margin-left: 10px;
+            margin-right: 0;
+        }
+
+        > div:not(.post__img) {
+            text-align: left;
+            width: fit-content;
+            max-width: 65%;
+
+            .post__header {
+                flex-direction: row-reverse;
+                justify-content: flex-start;
+
+                .col__name {
+                    margin-left: 8px;
+                    margin-right: 0;
+                }
+            }
+
+            .post__body {
+                background-color: rgba(var(--button-bg-rgb), 0.15);
+                border-radius: 16px;
+                padding: 10px 14px;
+            }
+        }
+    }
+
     &.other--root,
     &.post--root {
         .post__header-set-custom-status {

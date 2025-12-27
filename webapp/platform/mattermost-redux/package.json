@@ -61,7 +61,7 @@
   },
   "scripts": {
     "build": "tsc --build --verbose",
-    "postbuild": "sh postbuild.sh",
+    "postbuild": "node -e \"const fs=require('fs');const p=require('path');const src='../../channels/src/packages/mattermost-redux/src';const dst='lib';fs.copyFileSync(p.join(src,'selectors/create_selector/index.d.ts'),p.join(dst,'selectors/create_selector/index.d.ts'));fs.copyFileSync(p.join(src,'types/extend_redux.d.ts'),p.join(dst,'types/extend_redux.d.ts'));fs.copyFileSync(p.join(src,'types/extend_react_redux.d.ts'),p.join(dst,'types/extend_react_redux.d.ts'));\"",
     "clean": "rm -rf lib node_modules *.tsbuildinfo"
   }
 }

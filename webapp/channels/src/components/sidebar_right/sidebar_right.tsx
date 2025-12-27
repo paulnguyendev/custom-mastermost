@@ -50,6 +50,7 @@ export type Props = {
     selectedPostCardId: string;
     isSavedPosts?: boolean;
     isRecentMentions?: boolean;
+    isUnreadAll?: boolean;
     ariaLabel?: string;
     ariaLabeledby?: string;
     actions: {

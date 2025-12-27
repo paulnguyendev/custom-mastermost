@@ -82,11 +82,28 @@
             </defs>
         </svg>
     </div>
+    <!-- Custom Brand Logo (hidden by default, shown when brand image loads) -->
+    <div id="customBrandLogoContainer" class="LoadingAnimation__custom-brand" style="display: none;">
+        <img
+            id="customBrandLogo"
+            alt="Logo"
+            class="LoadingAnimation__custom-brand-image"
+        />
+        <div class="LoadingAnimation__spinner-ring"></div>
+    </div>
+
+    <!-- Default ProTalk Logo (shown by default, hidden when brand image loads) -->
     <div
         id="initialPageLoadingAnimation"
         class="LoadingAnimation LoadingAnimation--darkMode LoadingAnimation--spinning LoadingAnimation--loading"
     >
-        <svg
+        <img
+            src="../../images/protalk-logo.png"
+            alt="ProTalk Logo"
+            width="120"
+            style="max-height: 140px; object-fit: contain;"
+        />
+        <!--<svg
             width="104"
             height="104"
             viewBox="0 0 104 104"
@@ -216,6 +233,32 @@
                     </g>
                 </g>
             </g>
-        </svg>
+        </svg>-->
     </div>
+
+    <!-- Script to handle custom brand image loading -->
+    <script>
+        (function() {
+            var brandImg = document.getElementById('customBrandLogo');
+            var brandContainer = document.getElementById('customBrandLogoContainer');
+            var defaultAnimation = document.getElementById('initialPageLoadingAnimation');
+
+            if (brandImg && brandContainer && defaultAnimation) {
+                brandImg.onload = function() {
+                    // Brand image loaded successfully
+                    brandContainer.style.display = 'flex';
+                    defaultAnimation.style.display = 'none';
+                };
+
+                brandImg.onerror = function() {
+                    // Brand image failed to load - show default animation
+                    brandContainer.style.display = 'none';
+                    defaultAnimation.style.display = 'block';
+                };
+
+                // Use relative path - webpack dev server will proxy to backend
+                brandImg.src = '/api/v4/brand/image?_=' + Date.now();
+            }
+        })();
+    </script>
 </div>

@@ -269,7 +269,7 @@ export default class UserAccessTokenSection extends React.PureComponent<Props, S
                     <p>
                         <FormattedMessage
                             id='user.settings.tokens.confirmDelete.description'
-                            defaultMessage={'Any integrations using this token will no longer be able to access the Mattermost API. You cannot undo this action.'}
+                            defaultMessage={'Any integrations using this token will no longer be able to access the ProTalk API. You cannot undo this action.'}
                         />
                     </p>
                     <p>

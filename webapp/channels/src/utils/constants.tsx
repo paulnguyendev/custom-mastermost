@@ -1041,6 +1041,7 @@ export const RHSStates = {
     CHANNEL_INFO: 'channel-info',
     CHANNEL_MEMBERS: 'channel-members',
     EDIT_HISTORY: 'edit-history',
+    UNREAD_ALL: 'unread-all',
 };
 
 export const UploadStatuses = {

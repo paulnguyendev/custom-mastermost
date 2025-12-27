@@ -128,6 +128,7 @@ const SearchResults: React.FC<Props> = (props: Props): JSX.Element => {
         isSearchingFlaggedPost,
         isPinnedPosts,
         isChannelFiles,
+        isUnreadAll,
         isSearchingPinnedPost,
         isSideBarExpanded,
         isMentionSearch,
@@ -186,6 +187,13 @@ const SearchResults: React.FC<Props> = (props: Props): JSX.Element => {
         titleDescriptor = defineMessage({
             id: 'search_header.pinnedMessages',
             defaultMessage: 'Pinned messages',
+        });
+    } else if (isUnreadAll) {
+        noResultsProps.variant = NoResultsVariant.Mentions;
+
+        titleDescriptor = defineMessage({
+            id: 'search_header.unreadAll',
+            defaultMessage: 'Unread Messages',
         });
     } else if (isChannelFiles) {
         if (searchFilterType === 'all') {

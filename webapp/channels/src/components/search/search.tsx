@@ -16,6 +16,7 @@ import type Provider from 'components/suggestion/provider';
 import SearchChannelProvider from 'components/suggestion/search_channel_provider';
 import SearchDateProvider from 'components/suggestion/search_date_provider';
 import SearchUserProvider from 'components/suggestion/search_user_provider';
+import UnreadAllResults from 'components/unread_all_results';
 import SearchIcon from 'components/widgets/icons/search_icon';
 import Popover from 'components/widgets/popover';
 
@@ -104,6 +105,7 @@ const Search = ({
     isPinnedPosts,
     isRhsExpanded,
     isSearchingTerm,
+    isUnreadAll,
     searchTeam,
     searchTerms = '',
     searchType,
@@ -534,19 +536,22 @@ const Search = ({
 
     return (
         <div className='sidebar--right__content'>
-            {!hideMobileSearchBarInRHS && (
+            {!hideMobileSearchBarInRHS && !isUnreadAll && (
                 <div className='search-bar__container channel-header alt'>
                     <div className='sidebar-right__table'>
                         {renderSearchBar()}
                     </div>
                 </div>
             )}
-            {searchVisible ? (
+            {isUnreadAll ? (
+                <UnreadAllResults shrink={handleShrink}/>
+            ) : searchVisible ? (
                 <SearchResults
                     isMentionSearch={isMentionSearch}
                     isFlaggedPosts={isFlaggedPosts}
                     isPinnedPosts={isPinnedPosts}
                     isChannelFiles={isChannelFiles}
+                    isUnreadAll={isUnreadAll}
                     shrink={handleShrink}
                     channelDisplayName={channelDisplayName}
                     isOpened={isSideBarRightOpen}
