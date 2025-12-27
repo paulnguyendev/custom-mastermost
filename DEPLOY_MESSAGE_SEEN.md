@@ -1,5 +1,21 @@
 # Deploy Message Seen Feature to Production
 
+## Release Note
+- Release date: 27/12/2024
+- Version: 1.3
+
+## Overview
+- Thêm tính năng Message Seen (Read Receipts) để biết ai đã xem tin nhắn
+
+## Features
+- Hiển thị avatar người đã xem tin nhắn bên dưới mỗi tin
+- Tự động đánh dấu đã xem khi tin nhắn xuất hiện trên màn hình
+- Popover hiển thị danh sách đầy đủ người đã xem khi hover
+- Real-time update qua WebSocket khi có người xem tin nhắn mới
+- Persist data khi refresh trang
+
+---
+
 Hướng dẫn deploy thủ công tính năng Message Seen lên server production.
 
 ## 1. Build trên máy local (Windows)
