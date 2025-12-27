@@ -7,8 +7,6 @@ Hướng dẫn deploy thủ công tính năng Message Seen lên server productio
 ### Build Server (Linux binary)
 ```powershell
 cd D:\Workspaces\projects\mattermost\server
-
-# Build cho Linux
 $env:GOOS="linux"; $env:GOARCH="amd64"; go build -o bin/mattermost ./cmd/mattermost
 ```
 
@@ -19,23 +17,41 @@ npm install
 npm run build --workspace=channels
 ```
 
-## 2. Backup trên Server Production
+### Đóng gói files
+```powershell
+# Zip webapp
+cd D:\Workspaces\projects\mattermost\webapp\channels
+Compress-Archive -Path dist\* -DestinationPath D:\Workspaces\projects\mattermost\webapp\protalk-client.zip -Force
+
+# Zip server binary
+cd D:\Workspaces\projects\mattermost\server
+Compress-Archive -Path bin\mattermost -DestinationPath D:\Workspaces\projects\mattermost\server\protalk-server.zip -Force
+```
+
+## 2. Upload lên Server
+
+```powershell
+scp D:\Workspaces\projects\mattermost\webapp\protalk-client.zip user@your-server:/tmp/
+scp D:\Workspaces\projects\mattermost\server\protalk-server.zip user@your-server:/tmp/
+```
+
+## 3. SSH vào Server và Backup
 
 ```bash
-# SSH vào server
 ssh user@your-server
 
 # Backup database
-pg_dump -U mmuser -d mattermost > backup_$(date +%Y%m%d).sql
+pg_dump -U mmuser -d mattermost > backup_$(date +%Y%m%d_%H%M%S).sql
 
-# Backup binary và client hiện tại
-cp /opt/mattermost/bin/mattermost /opt/mattermost/bin/mattermost.bak
-cp -r /opt/mattermost/client /opt/mattermost/client.bak
+# Backup webapp
+cd /opt/mattermost
+sudo mv client client.bak.$(date +%Y%m%d_%H%M%S)
+
+# Backup server binary
+sudo cp bin/mattermost bin/mattermost.bak.$(date +%Y%m%d_%H%M%S)
 ```
 
-## 3. Chạy Migration Database
-
-Chạy SQL trực tiếp trên PostgreSQL:
+## 4. Chạy Migration Database
 
 ```bash
 psql -U mmuser -d mattermost
@@ -56,59 +72,45 @@ CREATE INDEX IF NOT EXISTS idx_readreceipts_user_id ON ReadReceipts(UserId);
 CREATE INDEX IF NOT EXISTS idx_readreceipts_channel_id ON ReadReceipts(ChannelId);
 ```
 
-## 4. Upload Files lên Server
-
-### Từ Windows (dùng SCP hoặc WinSCP)
-
-**Server binary:**
-```
-Local:  D:\Workspaces\projects\mattermost\server\bin\mattermost
-Remote: /opt/mattermost/bin/mattermost
-```
-
-**Webapp client:**
-```
-Local:  D:\Workspaces\projects\mattermost\webapp\channels\dist\*
-Remote: /opt/mattermost/client/
-```
-
-### Hoặc dùng SCP command:
-```powershell
-scp server/bin/mattermost user@server:/opt/mattermost/bin/
-scp -r webapp/channels/dist/* user@server:/opt/mattermost/client/
-```
-
-## 5. Restart Server
+## 5. Deploy Files
 
 ```bash
-# Stop server
-sudo systemctl stop mattermost
+# Deploy webapp
+cd /opt/mattermost
+sudo mkdir client
+cd client
+sudo unzip /tmp/protalk-client.zip
+sudo chown -R mattermost:mattermost /opt/mattermost/client
 
-# Set permission
-chmod +x /opt/mattermost/bin/mattermost
+# Deploy server binary
+cd /opt/mattermost/bin
+sudo unzip /tmp/protalk-server.zip
+sudo chmod +x mattermost
+sudo chown mattermost:mattermost mattermost
+```
 
-# Start server
-sudo systemctl start mattermost
+## 6. Restart Server
 
-# Kiểm tra logs
+```bash
+sudo systemctl restart mattermost
 tail -f /opt/mattermost/logs/mattermost.log
 ```
 
-## 6. Verify
+## 7. Verify
 
 ```bash
-# Kiểm tra bảng đã tạo
 psql -U mmuser -d mattermost -c "\d ReadReceipts"
 ```
 
-Test: Mở 2 browser, User A gửi tin → User B xem → User A thấy "Seen"
+Test: User A gửi tin → User B xem → User A thấy "Seen"
 
 ## Rollback
 
 ```bash
 sudo systemctl stop mattermost
-cp /opt/mattermost/bin/mattermost.bak /opt/mattermost/bin/mattermost
-cp -r /opt/mattermost/client.bak/* /opt/mattermost/client/
+sudo rm -rf /opt/mattermost/client
+sudo mv /opt/mattermost/client.bak.YYYYMMDD_HHMMSS /opt/mattermost/client
+sudo cp /opt/mattermost/bin/mattermost.bak.YYYYMMDD_HHMMSS /opt/mattermost/bin/mattermost
 psql -U mmuser -d mattermost -c "DROP TABLE IF EXISTS ReadReceipts;"
 sudo systemctl start mattermost
 ```
