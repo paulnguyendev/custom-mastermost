@@ -83,6 +83,7 @@ const (
 	WebsocketEventDraftDeleted                        WebsocketEventType = "draft_deleted"
 	WebsocketEventAcknowledgementAdded                WebsocketEventType = "post_acknowledgement_added"
 	WebsocketEventAcknowledgementRemoved              WebsocketEventType = "post_acknowledgement_removed"
+	WebsocketEventMessageSeen                         WebsocketEventType = "message_seen"
 	WebsocketEventPersistentNotificationTriggered     WebsocketEventType = "persistent_notification_triggered"
 	WebsocketEventHostedCustomerSignupProgressUpdated WebsocketEventType = "hosted_customer_signup_progress_updated"
 	WebsocketEventChannelBookmarkCreated              WebsocketEventType = "channel_bookmark_created"

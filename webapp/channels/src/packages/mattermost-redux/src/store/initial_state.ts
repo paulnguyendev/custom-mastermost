@@ -94,6 +94,7 @@ const state: GlobalState = {
             },
             limitedViews: zeroStateLimitedViews,
             acknowledgements: {},
+            readReceipts: {},
         },
         threads: {
             threadsInTeam: {},

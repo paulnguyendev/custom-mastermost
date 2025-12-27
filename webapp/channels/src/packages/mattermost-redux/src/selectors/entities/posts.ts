@@ -8,6 +8,7 @@ import type {
     Post,
     PostAcknowledgement,
     PostOrderBlock,
+    ReadReceipt,
 } from '@mattermost/types/posts';
 import type {Reaction} from '@mattermost/types/reactions';
 import type {GlobalState} from '@mattermost/types/store';
@@ -684,4 +685,42 @@ export function getTeamIdFromPost(state: GlobalState, post: Post): Team['id'] | 
     }
 
     return channel.team_id;
+}
+
+// Read Receipts selectors
+export function getReadReceipts(state: GlobalState, postId: Post['id']): Record<UserProfile['id'], ReadReceipt['seen_at']> {
+    return state.entities.posts.readReceipts?.[postId] || {};
+}
+
+export function makeGetReadReceiptsWithProfiles(): (state: GlobalState, postId: Post['id']) => Array<{user: UserProfile; seenAt: ReadReceipt['seen_at']}> {
+    return createSelector(
+        'makeGetReadReceiptsWithProfiles',
+        getUsers,
+        getReadReceipts,
+        (users, receipts) => {
+            if (!receipts) {
+                return [];
+            }
+            return Object.keys(receipts).flatMap((userId) => {
+                if (!users[userId]) {
+                    return [];
+                }
+                return {
+                    user: users[userId],
+                    seenAt: receipts[userId],
+                };
+            }).sort((a, b) => b.seenAt - a.seenAt);
+        },
+    );
+}
+
+export function getReadReceiptCount(state: GlobalState, postId: Post['id']): number {
+    const receipts = getReadReceipts(state, postId);
+    return Object.keys(receipts).length;
+}
+
+export function hasCurrentUserSeenPost(state: GlobalState, postId: Post['id']): boolean {
+    const currentUserId = getCurrentUserId(state);
+    const receipts = getReadReceipts(state, postId);
+    return Boolean(receipts[currentUserId]);
 }

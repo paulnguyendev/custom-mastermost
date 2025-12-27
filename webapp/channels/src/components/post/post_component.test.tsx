@@ -55,6 +55,7 @@ describe('PostComponent', () => {
             savePreferences: jest.fn(),
             openModal: jest.fn(),
             closeModal: jest.fn(),
+            markMessageAsSeen: jest.fn(),
         },
     };
 

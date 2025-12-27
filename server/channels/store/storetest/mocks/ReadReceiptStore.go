@@ -111,6 +111,66 @@ func (_m *ReadReceiptStore) GetByPost(rctx request.CTX, postID string) ([]*model
 	return r0, r1
 }
 
+// GetByPostWithUsers provides a mock function with given fields: rctx, postID, limit, offset
+func (_m *ReadReceiptStore) GetByPostWithUsers(rctx request.CTX, postID string, limit int, offset int) ([]*model.ReadReceipt, error) {
+	ret := _m.Called(rctx, postID, limit, offset)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByPostWithUsers")
+	}
+
+	var r0 []*model.ReadReceipt
+	var r1 error
+	if rf, ok := ret.Get(0).(func(request.CTX, string, int, int) ([]*model.ReadReceipt, error)); ok {
+		return rf(rctx, postID, limit, offset)
+	}
+	if rf, ok := ret.Get(0).(func(request.CTX, string, int, int) []*model.ReadReceipt); ok {
+		r0 = rf(rctx, postID, limit, offset)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*model.ReadReceipt)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(request.CTX, string, int, int) error); ok {
+		r1 = rf(rctx, postID, limit, offset)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetForPosts provides a mock function with given fields: rctx, postIDs
+func (_m *ReadReceiptStore) GetForPosts(rctx request.CTX, postIDs []string) ([]*model.ReadReceipt, error) {
+	ret := _m.Called(rctx, postIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetForPosts")
+	}
+
+	var r0 []*model.ReadReceipt
+	var r1 error
+	if rf, ok := ret.Get(0).(func(request.CTX, []string) ([]*model.ReadReceipt, error)); ok {
+		return rf(rctx, postIDs)
+	}
+	if rf, ok := ret.Get(0).(func(request.CTX, []string) []*model.ReadReceipt); ok {
+		r0 = rf(rctx, postIDs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*model.ReadReceipt)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(request.CTX, []string) error); ok {
+		r1 = rf(rctx, postIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetReadCountForPost provides a mock function with given fields: rctx, postID
 func (_m *ReadReceiptStore) GetReadCountForPost(rctx request.CTX, postID string) (int64, error) {
 	ret := _m.Called(rctx, postID)

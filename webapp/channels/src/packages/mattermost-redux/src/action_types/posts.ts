@@ -64,4 +64,8 @@ export default keyMirror({
     REVEAL_BURN_ON_READ_SUCCESS: null,
     POST_RECIPIENTS_UPDATED: null,
     BURN_ON_READ_ALL_REVEALED: null,
+
+    // Message Seen
+    MARK_MESSAGE_SEEN_SUCCESS: null,
+    RECEIVED_READ_RECEIPTS: null,
 });

@@ -8,7 +8,7 @@ import type {Channel, ChannelUnread} from '@mattermost/types/channels';
 import type {FetchPaginatedThreadOptions} from '@mattermost/types/client4';
 import type {Group} from '@mattermost/types/groups';
 import {isMessageAttachmentArray} from '@mattermost/types/message_attachments';
-import type {Post, PostList, PostAcknowledgement} from '@mattermost/types/posts';
+import type {Post, PostList, PostAcknowledgement, ReadReceipt} from '@mattermost/types/posts';
 import type {Reaction} from '@mattermost/types/reactions';
 import type {GlobalState} from '@mattermost/types/store';
 import type {UserProfile} from '@mattermost/types/users';
@@ -1367,5 +1367,82 @@ export function restorePostVersion(postId: string, restoreVersionId: string, con
         }
 
         return {data: true};
+    };
+}
+
+export function markMessageAsSeen(postId: string): ActionFuncAsync {
+    return async (dispatch, getState) => {
+        const userId = getCurrentUserId(getState());
+
+        let data;
+        try {
+            data = await Client4.markMessageAsSeen(postId, userId);
+        } catch (error) {
+            forceLogoutIfNecessary(error, dispatch, getState);
+            dispatch(logError(error));
+            return {error};
+        }
+
+        if (data) {
+            dispatch({
+                type: PostTypes.MARK_MESSAGE_SEEN_SUCCESS,
+                data: {
+                    post_id: data.post_id,
+                    user_id: data.user_id,
+                    seen_at: data.seen_at,
+                } as ReadReceipt,
+            });
+        }
+
+        return {data};
+    };
+}
+
+export function getSeenUsersForPost(postId: string, limit = 50, offset = 0): ActionFuncAsync {
+    return async (dispatch, getState) => {
+        let data;
+        try {
+            data = await Client4.getSeenUsersForPost(postId, limit, offset);
+        } catch (error) {
+            forceLogoutIfNecessary(error, dispatch, getState);
+            dispatch(logError(error));
+            return {error};
+        }
+
+        // Handle null/undefined response
+        if (!data || !Array.isArray(data)) {
+            return {data: []};
+        }
+
+        // Fetch user profiles for users we don't have yet
+        const userIds = data.map((r: {user_id: string}) => r.user_id).filter(Boolean);
+        if (userIds.length > 0) {
+            dispatch(getProfilesByIds(userIds));
+        }
+
+        dispatch({
+            type: PostTypes.RECEIVED_READ_RECEIPTS,
+            data: {
+                postId,
+                receipts: data,
+            },
+        });
+
+        return {data};
+    };
+}
+
+export function getSeenCountForPost(postId: string): ActionFuncAsync {
+    return async (dispatch, getState) => {
+        let data;
+        try {
+            data = await Client4.getSeenCountForPost(postId);
+        } catch (error) {
+            forceLogoutIfNecessary(error, dispatch, getState);
+            dispatch(logError(error));
+            return {error};
+        }
+
+        return {data};
     };
 }

@@ -11,7 +11,7 @@ import type {Post} from '@mattermost/types/posts';
 
 import {savePreferences} from 'mattermost-redux/actions/preferences';
 import {General, Preferences as ReduxPreferences} from 'mattermost-redux/constants';
-import {getDirectTeammate} from 'mattermost-redux/selectors/entities/channels';
+import {getDirectTeammate, getAllChannelStats} from 'mattermost-redux/selectors/entities/channels';
 import {getConfig} from 'mattermost-redux/selectors/entities/general';
 import {getPost, makeGetCommentCountForPost, makeIsPostCommentMention, isPostAcknowledgementsEnabled, isPostPriorityEnabled, isPostFlagged} from 'mattermost-redux/selectors/entities/posts';
 import type {UserActivityPost} from 'mattermost-redux/selectors/entities/posts';
@@ -25,7 +25,7 @@ import {getCurrentUserId, getUser} from 'mattermost-redux/selectors/entities/use
 
 import {burnPostNow} from 'actions/burn_on_read_deletion';
 import {revealBurnOnReadPost} from 'actions/burn_on_read_posts';
-import {markPostAsUnread, emitShortcutReactToLastPostFrom} from 'actions/post_actions';
+import {markPostAsUnread, emitShortcutReactToLastPostFrom, markMessageAsSeen} from 'actions/post_actions';
 import {openModal, closeModal} from 'actions/views/modals';
 import {closeRightHandSide, selectPost, setRhsExpanded, selectPostCard, selectPostFromRightHandSideSearch} from 'actions/views/rhs';
 import {getBurnOnReadDurationMinutes} from 'selectors/burn_on_read';
@@ -227,6 +227,7 @@ function makeMapStateToProps() {
             burnOnReadDurationMinutes: getBurnOnReadDurationMinutes(state),
             burnOnReadSkipConfirmation: getBool(state, ReduxPreferences.CATEGORY_BURN_ON_READ, ReduxPreferences.BURN_ON_READ_SKIP_CONFIRMATION, false),
             isBurnOnReadPost: isPostBurnOnRead,
+            channelMemberCount: getAllChannelStats(state)[post.channel_id]?.member_count || 0,
         };
     };
 }
@@ -247,6 +248,7 @@ function mapDispatchToProps(dispatch: Dispatch) {
             savePreferences,
             openModal,
             closeModal,
+            markMessageAsSeen,
         }, dispatch),
     };
 }

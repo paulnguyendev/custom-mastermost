@@ -517,3 +517,5 @@ export function emitShortcutReactToLastPostFrom(emittedFrom: keyof typeof Consta
         payload: emittedFrom,
     };
 }
+
+export {markMessageAsSeen} from 'mattermost-redux/actions/posts';

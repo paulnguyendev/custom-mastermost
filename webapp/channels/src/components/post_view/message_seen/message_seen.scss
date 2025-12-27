@@ -1,0 +1,58 @@
+.MessageSeenIndicator {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 4px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: transparent;
+    color: rgba(var(--center-channel-color-rgb), 0.56);
+    font-size: 11px;
+    line-height: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease-out;
+
+    &:hover {
+        background: rgba(var(--center-channel-color-rgb), 0.08);
+        color: rgba(var(--center-channel-color-rgb), 0.72);
+    }
+
+    &__avatars {
+        display: flex;
+        flex-direction: row-reverse;
+        margin-right: 4px;
+    }
+
+    &__avatar {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 1.5px solid var(--center-channel-bg);
+        margin-left: -6px;
+        object-fit: cover;
+
+        &:last-child {
+            margin-left: 0;
+        }
+    }
+
+    &__count {
+        font-size: 11px;
+        font-weight: 600;
+        color: rgba(var(--center-channel-color-rgb), 0.64);
+    }
+
+    &__checkmark {
+        color: rgb(var(--semantic-color-success));
+        font-size: 12px;
+        font-weight: 600;
+        margin-right: 4px;
+        letter-spacing: -2px;
+    }
+
+    &--all-seen {
+        .MessageSeenIndicator__count {
+            color: rgb(var(--semantic-color-success));
+        }
+    }
+}
+

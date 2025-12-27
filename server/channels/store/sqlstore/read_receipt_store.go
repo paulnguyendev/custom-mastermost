@@ -38,6 +38,8 @@ func readReceiptSliceColumns() []string {
 	return []string{
 		"PostId",
 		"UserId",
+		"ChannelId",
+		"SeenAt",
 		"ExpireAt",
 	}
 }
@@ -46,16 +48,33 @@ func (s *SqlReadReceiptStore) InvalidateReadReceiptForPostsCache(postID string) 
 }
 
 func (s *SqlReadReceiptStore) Save(rctx request.CTX, receipt *model.ReadReceipt) (*model.ReadReceipt, error) {
+	receipt.PreSave()
+
+	// Check if already exists
+	existing, err := s.Get(rctx, receipt.PostID, receipt.UserID)
+	if err == nil && existing != nil {
+		// Already seen, return existing
+		return existing, nil
+	}
+
+	// If error is not "not found", return the error
+	var nfErr *store.ErrNotFound
+	if err != nil && !errors.As(err, &nfErr) {
+		return nil, err
+	}
+
 	query := s.getQueryBuilder().
 		Insert("ReadReceipts").
 		Columns(readReceiptSliceColumns()...).
 		Values(
 			receipt.PostID,
 			receipt.UserID,
+			receipt.ChannelID,
+			receipt.SeenAt,
 			receipt.ExpireAt,
 		)
 
-	_, err := s.GetMaster().ExecBuilder(query)
+	_, err = s.GetMaster().ExecBuilder(query)
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +85,7 @@ func (s *SqlReadReceiptStore) Save(rctx request.CTX, receipt *model.ReadReceipt)
 func (s *SqlReadReceiptStore) Update(rctx request.CTX, receipt *model.ReadReceipt) (*model.ReadReceipt, error) {
 	query := s.getQueryBuilder().
 		Update("ReadReceipts").
+		Set("SeenAt", receipt.SeenAt).
 		Set("ExpireAt", receipt.ExpireAt).
 		Where(sq.Eq{"PostId": receipt.PostID, "UserId": receipt.UserID})
 
@@ -162,4 +182,37 @@ func (s *SqlReadReceiptStore) GetUnreadCountForPost(rctx request.CTX, post *mode
 
 	// Return true if no one is unread (all have read it)
 	return unreadCount, nil
+}
+
+func (s *SqlReadReceiptStore) GetByPostWithUsers(rctx request.CTX, postID string, limit, offset int) ([]*model.ReadReceipt, error) {
+	query := s.selectQueryBuilder.
+		Where(sq.Eq{"PostId": postID}).
+		OrderBy("SeenAt DESC").
+		Limit(uint64(limit)).
+		Offset(uint64(offset))
+
+	var receipts []*model.ReadReceipt
+	err := s.GetReplica().SelectBuilder(&receipts, query)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get ReadReceipts for postId=%s", postID)
+	}
+
+	return receipts, nil
+}
+
+func (s *SqlReadReceiptStore) GetForPosts(rctx request.CTX, postIDs []string) ([]*model.ReadReceipt, error) {
+	if len(postIDs) == 0 {
+		return []*model.ReadReceipt{}, nil
+	}
+
+	query := s.selectQueryBuilder.
+		Where(sq.Eq{"PostId": postIDs})
+
+	var receipts []*model.ReadReceipt
+	err := s.GetReplica().SelectBuilder(&receipts, query)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get ReadReceipts for posts")
+	}
+
+	return receipts, nil
 }

@@ -30,6 +30,7 @@ import BurnOnReadConcealedPlaceholder from 'components/post_view/burn_on_read_co
 import BurnOnReadTimerChip from 'components/post_view/burn_on_read_timer_chip';
 import CommentedOn from 'components/post_view/commented_on/commented_on';
 import FailedPostOptions from 'components/post_view/failed_post_options';
+import MessageSeen from 'components/post_view/message_seen';
 import PostAriaLabelDiv from 'components/post_view/post_aria_label_div';
 import PostBodyAdditionalContent from 'components/post_view/post_body_additional_content';
 import PostMessageContainer from 'components/post_view/post_message_view';
@@ -108,6 +109,7 @@ export type Props = {
         savePreferences: (userId: string, preferences: Array<{category: string; user_id: string; name: string; value: string}>) => void;
         openModal: <P>(modalData: ModalData<P>) => void;
         closeModal: (modalId: string) => void;
+        markMessageAsSeen: (postId: string) => void;
     };
     timestampProps?: Partial<TimestampProps>;
     shouldHighlight?: boolean;
@@ -131,6 +133,7 @@ export type Props = {
     shouldDisplayBurnOnReadConcealed?: boolean;
     burnOnReadDurationMinutes: number;
     burnOnReadSkipConfirmation?: boolean;
+    channelMemberCount?: number;
 };
 
 function PostComponent(props: Props) {
@@ -230,6 +233,31 @@ function PostComponent(props: Props) {
             document.removeEventListener('keyup', handleA11yKeyboardFocus);
         };
     }, [handleA11yKeyboardFocus]);
+
+    // Viewport detection for message seen
+    useEffect(() => {
+        if (!postRef.current || isSystemMessage || post.user_id === props.currentUserId) {
+            return undefined;
+        }
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        props.actions.markMessageAsSeen(post.id);
+                        observer.disconnect();
+                    }
+                });
+            },
+            {threshold: 0.5},
+        );
+
+        observer.observe(postRef.current);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [post.id, post.user_id, props.currentUserId, isSystemMessage, props.actions]);
 
     const hasSameRoot = (props: Props) => {
         if (props.isFirstReply) {
@@ -838,6 +866,7 @@ function PostComponent(props: Props) {
                                 )}
                                 {showReactions && <ReactionList post={post}/>}
                             </div>
+                            <MessageSeen postId={post.id} channelMemberCount={props.channelMemberCount}/>
                             {threadFooter}
                         </div>
                     </div>

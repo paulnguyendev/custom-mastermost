@@ -2646,6 +2646,29 @@ export default class Client4 {
         );
     };
 
+    // Message Seen Routes
+
+    markMessageAsSeen = (postId: string, userId: string) => {
+        return this.doFetch<{post_id: string; user_id: string; seen_at: number}>(
+            `${this.getUserRoute(userId)}/posts/${postId}/seen`,
+            {method: 'post'},
+        );
+    };
+
+    getSeenUsersForPost = (postId: string, limit = 50, offset = 0) => {
+        return this.doFetch<Array<{post_id: string; user_id: string; seen_at: number; username: string; nickname: string; first_name: string; last_name: string}>>(
+            `${this.getPostRoute(postId)}/seen?limit=${limit}&offset=${offset}`,
+            {method: 'get'},
+        );
+    };
+
+    getSeenCountForPost = (postId: string) => {
+        return this.doFetch<{count: number}>(
+            `${this.getPostRoute(postId)}/seen/count`,
+            {method: 'get'},
+        );
+    };
+
     // Preference Routes
 
     savePreferences = (userId: string, preferences: PreferenceType[]) => {

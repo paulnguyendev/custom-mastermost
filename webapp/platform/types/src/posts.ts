@@ -57,6 +57,20 @@ export type PostAcknowledgement = {
     acknowledged_at: number;
 }
 
+export type ReadReceipt = {
+    post_id: Post['id'];
+    user_id: UserProfile['id'];
+    channel_id: string;
+    seen_at: number;
+}
+
+export type ReadReceiptWithUser = ReadReceipt & {
+    username: string;
+    nickname: string;
+    first_name: string;
+    last_name: string;
+}
+
 export type PostPriorityMetadata = {
     priority: PostPriority|'';
     requested_ack?: boolean;
@@ -71,6 +85,7 @@ export type PostMetadata = {
     reactions?: Reaction[];
     priority?: PostPriorityMetadata;
     acknowledgements?: PostAcknowledgement[];
+    read_receipts?: ReadReceipt[];
     expire_at?: number;
     recipients?: string[];
 };
@@ -159,6 +174,7 @@ export type PostsState = {
         threads: Record<Post['root_id'], number>;
     };
     acknowledgements: RelationOneToOne<Post, Record<UserProfile['id'], number>>;
+    readReceipts: RelationOneToOne<Post, Record<UserProfile['id'], number>>;
 };
 
 export declare type OpenGraphMetadataImage = {

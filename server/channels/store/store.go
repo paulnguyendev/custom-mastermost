@@ -1192,8 +1192,10 @@ type ReadReceiptStore interface {
 	DeleteByPost(rctx request.CTX, postID string) error
 	Get(rctx request.CTX, postID, userID string) (*model.ReadReceipt, error)
 	GetByPost(rctx request.CTX, postID string) ([]*model.ReadReceipt, error)
+	GetByPostWithUsers(rctx request.CTX, postID string, limit, offset int) ([]*model.ReadReceipt, error)
 	GetReadCountForPost(rctx request.CTX, postID string) (int64, error)
 	GetUnreadCountForPost(rctx request.CTX, post *model.Post) (int64, error)
+	GetForPosts(rctx request.CTX, postIDs []string) ([]*model.ReadReceipt, error)
 }
 
 type TemporaryPostStore interface {

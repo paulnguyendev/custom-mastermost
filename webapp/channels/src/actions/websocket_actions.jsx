@@ -627,6 +627,9 @@ export function handleEvent(msg) {
     case SocketEvents.POST_ACKNOWLEDGEMENT_REMOVED:
         dispatch(handlePostAcknowledgementRemoved(msg));
         break;
+    case SocketEvents.MESSAGE_SEEN:
+        dispatch(handleMessageSeen(msg));
+        break;
     case SocketEvents.DRAFT_CREATED:
     case SocketEvents.DRAFT_UPDATED:
         dispatch(handleUpsertDraftEvent(msg));
@@ -1822,6 +1825,15 @@ function handlePostAcknowledgementRemoved(msg) {
 
     return {
         type: PostTypes.DELETE_ACK_POST_SUCCESS,
+        data,
+    };
+}
+
+function handleMessageSeen(msg) {
+    const data = JSON.parse(msg.data.read_receipt);
+
+    return {
+        type: PostTypes.MARK_MESSAGE_SEEN_SUCCESS,
         data,
     };
 }

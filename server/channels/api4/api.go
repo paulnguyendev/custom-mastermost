@@ -322,6 +322,7 @@ func Init(srv *app.Server) (*API, error) {
 	api.InitTeam()
 	api.InitChannel()
 	api.InitPost()
+	api.InitMessageSeen()
 	api.InitFile()
 	api.InitUpload()
 	api.InitSystem()

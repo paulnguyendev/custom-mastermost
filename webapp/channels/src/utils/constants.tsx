@@ -690,6 +690,7 @@ export const SocketEvents = {
     THREAD_READ_CHANGED: 'thread_read_changed',
     POST_ACKNOWLEDGEMENT_ADDED: 'post_acknowledgement_added',
     POST_ACKNOWLEDGEMENT_REMOVED: 'post_acknowledgement_removed',
+    MESSAGE_SEEN: 'message_seen',
     DRAFT_CREATED: 'draft_created',
     DRAFT_UPDATED: 'draft_updated',
     DRAFT_DELETED: 'draft_deleted',
