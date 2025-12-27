@@ -5,14 +5,13 @@
 - Version: 1.3
 
 ## Overview
-- Thêm tính năng Message Seen (Read Receipts) để biết ai đã xem tin nhắn
+- Thêm tính năng "Đã xem" giúp bạn biết ai đã đọc tin nhắn của mình
 
 ## Features
-- Hiển thị avatar người đã xem tin nhắn bên dưới mỗi tin
-- Tự động đánh dấu đã xem khi tin nhắn xuất hiện trên màn hình
-- Popover hiển thị danh sách đầy đủ người đã xem khi hover
-- Real-time update qua WebSocket khi có người xem tin nhắn mới
-- Persist data khi refresh trang
+- Xem ai đã đọc tin nhắn: Avatar của người đã xem hiển thị ngay bên dưới tin nhắn
+- Tự động cập nhật: Khi bạn cuộn đến tin nhắn, hệ thống tự động đánh dấu bạn đã xem
+- Xem danh sách đầy đủ: Di chuột vào avatar để xem tất cả người đã đọc
+- Cập nhật tức thì: Thấy ngay khi có người mới xem tin nhắn của bạn
 
 ---
 
