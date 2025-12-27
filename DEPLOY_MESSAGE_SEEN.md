@@ -1,46 +1,46 @@
 # Deploy Message Seen Feature to Production
 
-Hướng dẫn deploy tính năng Message Seen lên server production đang chạy.
+Hướng dẫn deploy thủ công tính năng Message Seen lên server production.
 
-## Prerequisites
+## 1. Build trên máy local (Windows)
 
-- Server production đang chạy Mattermost
-- Quyền truy cập SSH vào server
-- Quyền truy cập database PostgreSQL
+### Build Server (Linux binary)
+```powershell
+cd D:\Workspaces\projects\mattermost\server
 
-## 1. Backup Database
-
-```bash
-# SSH vào server production
-ssh user@your-production-server
-
-# Backup database trước khi deploy
-pg_dump -U mmuser -d mattermost > backup_$(date +%Y%m%d_%H%M%S).sql
+# Build cho Linux
+$env:GOOS="linux"; $env:GOARCH="amd64"; go build -o bin/mattermost ./cmd/mattermost
 ```
 
-## 2. Pull Code Mới
-
-```bash
-cd /path/to/mattermost
-
-# Pull code từ branch custom
-git fetch custom
-git checkout custom
-git pull custom custom
+### Build Webapp
+```powershell
+cd D:\Workspaces\projects\mattermost\webapp
+npm install
+npm run build --workspace=channels
 ```
 
-## 3. Chạy Database Migration
-
-Migration sẽ tạo bảng `ReadReceipts`:
+## 2. Backup trên Server Production
 
 ```bash
-# Chạy migration tự động khi start server
-# Hoặc chạy manual:
-cd server
-./bin/mattermost db migrate
+# SSH vào server
+ssh user@your-server
+
+# Backup database
+pg_dump -U mmuser -d mattermost > backup_$(date +%Y%m%d).sql
+
+# Backup binary và client hiện tại
+cp /opt/mattermost/bin/mattermost /opt/mattermost/bin/mattermost.bak
+cp -r /opt/mattermost/client /opt/mattermost/client.bak
 ```
 
-**Migration tạo bảng:**
+## 3. Chạy Migration Database
+
+Chạy SQL trực tiếp trên PostgreSQL:
+
+```bash
+psql -U mmuser -d mattermost
+```
+
 ```sql
 CREATE TABLE IF NOT EXISTS ReadReceipts (
     PostId VARCHAR(26) NOT NULL,
@@ -56,124 +56,60 @@ CREATE INDEX IF NOT EXISTS idx_readreceipts_user_id ON ReadReceipts(UserId);
 CREATE INDEX IF NOT EXISTS idx_readreceipts_channel_id ON ReadReceipts(ChannelId);
 ```
 
-## 4. Build Server
+## 4. Upload Files lên Server
 
-```bash
-cd server
+### Từ Windows (dùng SCP hoặc WinSCP)
 
-# Build server
-make build-linux  # Linux
-# hoặc
-make build        # Current OS
+**Server binary:**
+```
+Local:  D:\Workspaces\projects\mattermost\server\bin\mattermost
+Remote: /opt/mattermost/bin/mattermost
 ```
 
-## 5. Build Webapp
-
-```bash
-cd webapp
-
-# Install dependencies (nếu cần)
-npm install
-
-# Build production
-make dist
+**Webapp client:**
+```
+Local:  D:\Workspaces\projects\mattermost\webapp\channels\dist\*
+Remote: /opt/mattermost/client/
 ```
 
-## 6. Restart Server
-
-```bash
-# Stop server hiện tại
-sudo systemctl stop mattermost
-# hoặc
-pkill mattermost
-
-# Copy files mới (nếu build ở máy khác)
-cp -r server/bin/* /opt/mattermost/bin/
-cp -r webapp/channels/dist/* /opt/mattermost/client/
-
-# Start server
-sudo systemctl start mattermost
-# hoặc
-cd /opt/mattermost
-./bin/mattermost server
+### Hoặc dùng SCP command:
+```powershell
+scp server/bin/mattermost user@server:/opt/mattermost/bin/
+scp -r webapp/channels/dist/* user@server:/opt/mattermost/client/
 ```
 
-## 7. Verify Deployment
-
-1. Kiểm tra server logs:
-```bash
-tail -f /opt/mattermost/logs/mattermost.log
-```
-
-2. Kiểm tra migration đã chạy:
-```bash
-psql -U mmuser -d mattermost -c "SELECT * FROM db_migrations WHERE version = 149;"
-```
-
-3. Kiểm tra bảng ReadReceipts:
-```bash
-psql -U mmuser -d mattermost -c "\d ReadReceipts"
-```
-
-4. Test tính năng:
-   - Mở 2 browser với 2 user khác nhau
-   - User A gửi tin nhắn
-   - User B xem tin nhắn
-   - User A sẽ thấy indicator "Seen" với avatar của User B
-
-## Rollback (nếu cần)
+## 5. Restart Server
 
 ```bash
 # Stop server
 sudo systemctl stop mattermost
 
-# Restore database
-psql -U mmuser -d mattermost < backup_YYYYMMDD_HHMMSS.sql
+# Set permission
+chmod +x /opt/mattermost/bin/mattermost
 
-# Checkout code cũ
-git checkout <previous-commit>
-
-# Rebuild và restart
-cd server && make build
+# Start server
 sudo systemctl start mattermost
-```
-
-## Docker Deployment
-
-Nếu dùng Docker:
-
-```bash
-# Pull image mới hoặc build
-docker-compose build mattermost
-
-# Restart container
-docker-compose down
-docker-compose up -d
 
 # Kiểm tra logs
-docker-compose logs -f mattermost
+tail -f /opt/mattermost/logs/mattermost.log
 ```
 
-## Troubleshooting
+## 6. Verify
 
-### Lỗi migration
 ```bash
-# Xóa migration record và chạy lại
-psql -U mmuser -d mattermost -c "DELETE FROM db_migrations WHERE version = 149;"
-./bin/mattermost db migrate
+# Kiểm tra bảng đã tạo
+psql -U mmuser -d mattermost -c "\d ReadReceipts"
 ```
 
-### Lỗi permission database
-```bash
-# Grant quyền cho user
-psql -U postgres -d mattermost -c "GRANT ALL ON TABLE ReadReceipts TO mmuser;"
-```
+Test: Mở 2 browser, User A gửi tin → User B xem → User A thấy "Seen"
 
-### Webapp không load
+## Rollback
+
 ```bash
-# Clear cache và rebuild
-cd webapp
-rm -rf node_modules/.cache
-npm run build
+sudo systemctl stop mattermost
+cp /opt/mattermost/bin/mattermost.bak /opt/mattermost/bin/mattermost
+cp -r /opt/mattermost/client.bak/* /opt/mattermost/client/
+psql -U mmuser -d mattermost -c "DROP TABLE IF EXISTS ReadReceipts;"
+sudo systemctl start mattermost
 ```
 
