@@ -20,19 +20,17 @@ npm run build --workspace=channels
 ### Đóng gói files
 ```powershell
 # Zip webapp
-cd D:\Workspaces\projects\mattermost\webapp\channels
-Compress-Archive -Path dist\* -DestinationPath D:\Workspaces\projects\mattermost\webapp\protalk-client.zip -Force
+Compress-Archive -Path D:\Workspaces\projects\mattermost\webapp\channels\dist\* -DestinationPath D:\Workspaces\projects\mattermost\webapp\protalk-client-YYYYMMDD.zip -Force
 
 # Zip server binary
-cd D:\Workspaces\projects\mattermost\server
-Compress-Archive -Path bin\mattermost -DestinationPath D:\Workspaces\projects\mattermost\server\protalk-server.zip -Force
+Compress-Archive -Path D:\Workspaces\projects\mattermost\server\bin\mattermost -DestinationPath D:\Workspaces\projects\mattermost\server\protalk-server-YYYYMMDD.zip -Force
 ```
 
 ## 2. Upload lên Server
 
 ```powershell
-scp D:\Workspaces\projects\mattermost\webapp\protalk-client.zip user@your-server:/tmp/
-scp D:\Workspaces\projects\mattermost\server\protalk-server.zip user@your-server:/tmp/
+scp D:\Workspaces\projects\mattermost\webapp\protalk-client-YYYYMMDD.zip user@your-server:/tmp/
+scp D:\Workspaces\projects\mattermost\server\protalk-server-YYYYMMDD.zip user@your-server:/tmp/
 ```
 
 ## 3. SSH vào Server và Backup
@@ -79,12 +77,12 @@ CREATE INDEX IF NOT EXISTS idx_readreceipts_channel_id ON ReadReceipts(ChannelId
 cd /opt/mattermost
 sudo mkdir client
 cd client
-sudo unzip /tmp/protalk-client.zip
+sudo unzip /tmp/protalk-client-YYYYMMDD.zip
 sudo chown -R mattermost:mattermost /opt/mattermost/client
 
 # Deploy server binary
 cd /opt/mattermost/bin
-sudo unzip /tmp/protalk-server.zip
+sudo unzip /tmp/protalk-server-YYYYMMDD.zip
 sudo chmod +x mattermost
 sudo chown mattermost:mattermost mattermost
 ```
