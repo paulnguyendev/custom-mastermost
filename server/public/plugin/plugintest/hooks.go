@@ -642,6 +642,26 @@ func (_m *Hooks) WebSocketMessageHasBeenPosted(webConnID string, userID string, 
 	_m.Called(webConnID, userID, req)
 }
 
+// MessageWillBeBroadcast provides a mock function with given fields: c, post, userID
+func (_m *Hooks) MessageWillBeBroadcast(c *plugin.Context, post *model.Post, userID string) *model.Post {
+	ret := _m.Called(c, post, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MessageWillBeBroadcast")
+	}
+
+	var r0 *model.Post
+	if rf, ok := ret.Get(0).(func(*plugin.Context, *model.Post, string) *model.Post); ok {
+		r0 = rf(c, post, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*model.Post)
+		}
+	}
+
+	return r0
+}
+
 // NewHooks creates a new instance of Hooks. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewHooks(t interface {

@@ -64,6 +64,7 @@ const (
 	GenerateSupportDataID                     = 45
 	OnSAMLLoginID                             = 46
 	EmailNotificationWillBeSentID             = 47
+	MessageWillBeBroadcastID                  = 48
 	TotalHooksID                              = iota
 )
 
@@ -418,4 +419,23 @@ type Hooks interface {
 	//
 	// Minimum server version: 10.7
 	OnSAMLLogin(c *Context, user *model.User, assertion *saml2.AssertionInfo) error
+
+	// MessageWillBeBroadcast is invoked before a post is broadcast via WebSocket.
+	// This allows plugins to modify the post content for specific users before delivery.
+	// This is particularly useful for E2EE plugins that need to decrypt messages
+	// before they are sent to clients via WebSocket.
+	//
+	// Parameters:
+	//   - c: The plugin context
+	//   - post: The post that will be broadcast (should be cloned before modification)
+	//   - userID: The ID of the user who will receive this broadcast
+	//
+	// Returns:
+	//   - *model.Post: Modified post to broadcast, or nil to use the original post
+	//
+	// Note: This hook is called for each user receiving the broadcast, so implementations
+	// should be efficient. Consider caching decrypted content when possible.
+	//
+	// Minimum server version: 10.8
+	MessageWillBeBroadcast(c *Context, post *model.Post, userID string) *model.Post
 }

@@ -306,3 +306,10 @@ func (hooks *hooksTimerLayer) OnSAMLLogin(c *Context, user *model.User, assertio
 	hooks.recordTime(startTime, "OnSAMLLogin", _returnsA == nil)
 	return _returnsA
 }
+
+func (hooks *hooksTimerLayer) MessageWillBeBroadcast(c *Context, post *model.Post, userID string) *model.Post {
+	startTime := timePkg.Now()
+	_returnsA := hooks.hooksImpl.MessageWillBeBroadcast(c, post, userID)
+	hooks.recordTime(startTime, "MessageWillBeBroadcast", true)
+	return _returnsA
+}

@@ -934,6 +934,41 @@ func (s *hooksRPCServer) MessagesWillBeConsumed(args *Z_MessagesWillBeConsumedAr
 	return nil
 }
 
+// MessageWillBeBroadcast hook implementation for E2EE support
+func init() {
+	hookNameToId["MessageWillBeBroadcast"] = MessageWillBeBroadcastID
+}
+
+type Z_MessageWillBeBroadcastArgs struct {
+	A *Context
+	B *model.Post
+	C string
+}
+
+type Z_MessageWillBeBroadcastReturns struct {
+	A *model.Post
+}
+
+func (g *hooksRPCClient) MessageWillBeBroadcast(c *Context, post *model.Post, userID string) *model.Post {
+	_args := &Z_MessageWillBeBroadcastArgs{A: c, B: post, C: userID}
+	_returns := &Z_MessageWillBeBroadcastReturns{}
+	if g.implemented[MessageWillBeBroadcastID] {
+		if err := g.client.Call("Plugin.MessageWillBeBroadcast", _args, _returns); err != nil {
+			g.log.Error("RPC call MessageWillBeBroadcast to plugin failed.", mlog.Err(err))
+		}
+	}
+	return _returns.A
+}
+
+func (s *hooksRPCServer) MessageWillBeBroadcast(args *Z_MessageWillBeBroadcastArgs, returns *Z_MessageWillBeBroadcastReturns) error {
+	if hook, ok := s.impl.(interface {
+		MessageWillBeBroadcast(c *Context, post *model.Post, userID string) *model.Post
+	}); ok {
+		returns.A = hook.MessageWillBeBroadcast(args.A, args.B, args.C)
+	}
+	return nil
+}
+
 type Z_LogDebugArgs struct {
 	A string
 	B []any

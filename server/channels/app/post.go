@@ -926,6 +926,8 @@ func (a *App) publishWebsocketEventForPost(rctx request.CTX, post *model.Post, m
 		}
 	}
 
+	usePluginE2EEHook(message, postJSON)
+
 	a.Publish(message)
 	return nil
 }

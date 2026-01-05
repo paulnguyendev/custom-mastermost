@@ -9,6 +9,7 @@ import (
 	"slices"
 
 	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/mattermost/mattermost/server/public/plugin"
 	"github.com/mattermost/mattermost/server/public/shared/request"
 	"github.com/mattermost/mattermost/server/v8/channels/app/platform"
 	"github.com/mattermost/mattermost/server/v8/channels/store"
@@ -22,6 +23,7 @@ const (
 	broadcastPermalink          = "permalink"
 	broadcastBurnOnRead         = "burn_on_read"
 	broadcastBurnOnReadReaction = "burn_on_read_reaction"
+	broadcastPluginE2EE         = "plugin_e2ee"
 )
 
 func (s *Server) makeBroadcastHooks() map[string]platform.BroadcastHook {
@@ -32,6 +34,7 @@ func (s *Server) makeBroadcastHooks() map[string]platform.BroadcastHook {
 		broadcastPermalink:          &permalinkBroadcastHook{},
 		broadcastBurnOnRead:         &burnOnReadBroadcastHook{},
 		broadcastBurnOnReadReaction: &burnOnReadReactionBroadcastHook{},
+		broadcastPluginE2EE:         &pluginE2EEBroadcastHook{server: s},
 	}
 }
 
@@ -300,4 +303,55 @@ func getTypedArg[T any](args map[string]any, key string) (T, error) {
 
 	err = json.Unmarshal(buf, &value)
 	return value, err
+}
+
+type pluginE2EEBroadcastHook struct {
+	server *Server
+}
+
+func (h *pluginE2EEBroadcastHook) Process(msg *platform.HookedWebSocketEvent, webConn *platform.WebConn, args map[string]any) error {
+	postJSON, err := getTypedArg[string](args, "post_json")
+	if err != nil {
+		return errors.Wrap(err, "Invalid post_json value passed to pluginE2EEBroadcastHook")
+	}
+
+	var post model.Post
+	if err := json.Unmarshal([]byte(postJSON), &post); err != nil {
+		return errors.Wrap(err, "Failed to unmarshal post in pluginE2EEBroadcastHook")
+	}
+
+	ch := h.server.Channels()
+	if ch == nil {
+		return nil
+	}
+
+	rctx := request.EmptyContext(webConn.Platform.Log())
+	session := webConn.GetSession()
+	sessionID := ""
+	if session != nil {
+		sessionID = session.Id
+	}
+	pluginCtx := &plugin.Context{
+		RequestId:      rctx.RequestId(),
+		SessionId:      sessionID,
+		IPAddress:      webConn.GetConnectionID(),
+		AcceptLanguage: "",
+		UserAgent:      "",
+	}
+	modifiedPost := ch.PluginMessageWillBeBroadcast(pluginCtx, &post, webConn.UserId)
+	if modifiedPost != nil && modifiedPost != &post {
+		newPostJSON, err := modifiedPost.ToJSON()
+		if err != nil {
+			return errors.Wrap(err, "Failed to marshal modified post in pluginE2EEBroadcastHook")
+		}
+		msg.Add("post", newPostJSON)
+	}
+
+	return nil
+}
+
+func usePluginE2EEHook(message *model.WebSocketEvent, postJSON string) {
+	message.GetBroadcast().AddHook(broadcastPluginE2EE, map[string]any{
+		"post_json": postJSON,
+	})
 }

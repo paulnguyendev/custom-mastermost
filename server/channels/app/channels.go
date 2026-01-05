@@ -308,6 +308,18 @@ func (ch *Channels) RunMultiHook(hookRunnerFunc func(hooks plugin.Hooks, manifes
 	}
 }
 
+func (ch *Channels) PluginMessageWillBeBroadcast(c *plugin.Context, post *model.Post, userID string) *model.Post {
+	result := post
+	ch.RunMultiHook(func(hooks plugin.Hooks, _ *model.Manifest) bool {
+		newPost := hooks.MessageWillBeBroadcast(c, post.Clone(), userID)
+		if newPost != nil {
+			result = newPost
+		}
+		return true
+	}, plugin.MessageWillBeBroadcastID)
+	return result
+}
+
 func (ch *Channels) HooksForPlugin(id string) (plugin.Hooks, error) {
 	env := ch.GetPluginsEnvironment()
 	if env == nil {
