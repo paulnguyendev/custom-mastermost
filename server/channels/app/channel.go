@@ -3181,6 +3181,15 @@ func (a *App) MarkChannelsAsViewed(rctx request.CTX, channelIDs []string, userID
 		return times, nil
 	}
 
+	// Get LastViewedAt for each channel BEFORE updating (for marking messages as seen)
+	lastViewedAtMap := make(map[string]int64)
+	for _, channelID := range channelsToView {
+		lastViewedAt, lvErr := a.Srv().Store().Channel().GetMemberLastViewedAt(rctx, channelID, userID)
+		if lvErr == nil {
+			lastViewedAtMap[channelID] = lastViewedAt
+		}
+	}
+
 	updateThreads := *a.Config().ServiceSettings.ThreadAutoFollow && (!collapsedThreadsSupported || !isCRTEnabled)
 	if updateThreads {
 		err = a.Srv().Store().Thread().MarkAllAsReadByChannels(userID, channelsToView)
@@ -3199,6 +3208,13 @@ func (a *App) MarkChannelsAsViewed(rctx request.CTX, channelIDs []string, userID
 			return nil, model.NewAppError("MarkChannelsAsViewed", "app.channel.update_last_viewed_at.app_error", nil, "", http.StatusInternalServerError).Wrap(err)
 		}
 	}
+
+	// Mark unread messages as seen for each channel (async to not block the response)
+	go func() {
+		for channelID, lastViewedAt := range lastViewedAtMap {
+			a.MarkUnreadMessagesAsSeen(rctx, channelID, userID, lastViewedAt)
+		}
+	}()
 
 	if *a.Config().ServiceSettings.EnableChannelViewedMessages {
 		message := model.NewWebSocketEvent(model.WebsocketEventMultipleChannelsViewed, "", "", userID, nil, "")

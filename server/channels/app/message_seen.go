@@ -97,7 +97,8 @@ func (a *App) HasUserSeenPost(rctx request.CTX, postID, userID string) (bool, *m
 }
 
 func (a *App) sendMessageSeenEvent(rctx request.CTX, receipt *model.ReadReceipt, post *model.Post) {
-	message := model.NewWebSocketEvent(model.WebsocketEventMessageSeen, "", post.ChannelId, "", nil, "")
+	// Send WebSocket event only to the post author
+	message := model.NewWebSocketEvent(model.WebsocketEventMessageSeen, "", "", post.UserId, nil, "")
 
 	receiptJSON, err := json.Marshal(receipt)
 	if err != nil {
@@ -107,5 +108,80 @@ func (a *App) sendMessageSeenEvent(rctx request.CTX, receipt *model.ReadReceipt,
 	message.Add("read_receipt", string(receiptJSON))
 	message.Add("post_id", post.Id)
 	a.Publish(message)
+}
+
+// MarkUnreadMessagesAsSeen marks all unread messages in a channel as seen by the user
+// This is called when a user views a channel (from web or mobile app)
+func (a *App) MarkUnreadMessagesAsSeen(rctx request.CTX, channelID, userID string, lastViewedAt int64) *model.AppError {
+	// Get posts created after lastViewedAt (unread posts)
+	options := model.GetPostsSinceOptions{
+		ChannelId:       channelID,
+		Time:            lastViewedAt,
+		SkipFetchThreads: true,
+		CollapsedThreads: false,
+		UserId:          userID,
+	}
+
+	postList, err := a.Srv().Store().Post().GetPostsSince(rctx, options, false, a.Config().GetSanitizeOptions())
+	if err != nil {
+		rctx.Logger().Warn("Failed to get posts since lastViewedAt for marking as seen",
+			mlog.String("channel_id", channelID),
+			mlog.String("user_id", userID),
+			mlog.Err(err))
+		return nil // Don't fail the view operation
+	}
+
+	if postList == nil || len(postList.Posts) == 0 {
+		return nil
+	}
+
+	// Filter posts: only mark posts from other users as seen
+	var receiptsToSave []*model.ReadReceipt
+	var postsToNotify []*model.Post
+	for _, post := range postList.Posts {
+		// Skip own posts and deleted posts
+		if post.UserId == userID || post.DeleteAt > 0 {
+			continue
+		}
+		// Skip system messages
+		if post.IsSystemMessage() {
+			continue
+		}
+
+		receiptsToSave = append(receiptsToSave, &model.ReadReceipt{
+			PostID:    post.Id,
+			UserID:    userID,
+			ChannelID: channelID,
+		})
+		postsToNotify = append(postsToNotify, post)
+	}
+
+	if len(receiptsToSave) == 0 {
+		return nil
+	}
+
+	// Batch save read receipts
+	savedReceipts, saveErr := a.Srv().Store().ReadReceipt().SaveMultiple(rctx, receiptsToSave)
+	if saveErr != nil {
+		rctx.Logger().Warn("Failed to batch save read receipts",
+			mlog.String("channel_id", channelID),
+			mlog.String("user_id", userID),
+			mlog.Err(saveErr))
+		return nil // Don't fail the view operation
+	}
+
+	// Send WebSocket events to post authors
+	for i, receipt := range savedReceipts {
+		if i < len(postsToNotify) {
+			a.sendMessageSeenEvent(rctx, receipt, postsToNotify[i])
+		}
+	}
+
+	rctx.Logger().Debug("Marked messages as seen",
+		mlog.String("channel_id", channelID),
+		mlog.String("user_id", userID),
+		mlog.Int("count", len(savedReceipts)))
+
+	return nil
 }
 

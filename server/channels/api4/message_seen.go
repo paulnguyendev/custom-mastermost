@@ -61,6 +61,18 @@ func getSeenUsersForPost(c *Context, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Only allow post author to view seen users
+	post, err := c.App.GetSinglePost(c.AppContext, c.Params.PostId, false)
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	if post.UserId != c.AppContext.Session().UserId {
+		c.SetPermissionError(model.PermissionReadChannel)
+		return
+	}
+
 	limit := 50
 	offset := 0
 
@@ -94,6 +106,18 @@ func getSeenCountForPost(c *Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !c.App.SessionHasPermissionToChannelByPost(*c.AppContext.Session(), c.Params.PostId, model.PermissionReadChannel) {
+		c.SetPermissionError(model.PermissionReadChannel)
+		return
+	}
+
+	// Only allow post author to view seen count
+	post, err := c.App.GetSinglePost(c.AppContext, c.Params.PostId, false)
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	if post.UserId != c.AppContext.Session().UserId {
 		c.SetPermissionError(model.PermissionReadChannel)
 		return
 	}
