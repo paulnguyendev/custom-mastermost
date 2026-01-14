@@ -8,7 +8,7 @@ import {batchActions} from 'redux-batched-actions';
 import type {Post} from '@mattermost/types/posts';
 
 import {SearchTypes} from 'mattermost-redux/action_types';
-import {getChannel} from 'mattermost-redux/actions/channels';
+import {getChannel, fetchAllMyTeamsChannels} from 'mattermost-redux/actions/channels';
 import {getPostsByIds, getPost as fetchPost} from 'mattermost-redux/actions/posts';
 import {
     clearSearch,
@@ -481,8 +481,12 @@ export function showMentions(): ActionFunc<boolean> {
     };
 }
 
-export function showUnreadAll(): ActionFunc<boolean> {
-    return (dispatch) => {
+export function showUnreadAll(): ActionFuncAsync<boolean> {
+    return async (dispatch) => {
+        // Fetch all channels to ensure channel objects are available in store
+        // This syncs the badge count with the channel list
+        await dispatch(fetchAllMyTeamsChannels());
+
         dispatch({
             type: ActionTypes.UPDATE_RHS_STATE,
             state: RHSStates.UNREAD_ALL,

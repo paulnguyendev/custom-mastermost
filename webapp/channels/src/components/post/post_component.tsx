@@ -866,7 +866,12 @@ function PostComponent(props: Props) {
                                 )}
                                 {showReactions && <ReactionList post={post}/>}
                             </div>
-                            <MessageSeen postId={post.id} channelMemberCount={props.channelMemberCount}/>
+                            {post.user_id === props.currentUserId && (
+                                <MessageSeen
+                                    postId={post.id}
+                                    channelMemberCount={props.channelMemberCount}
+                                />
+                            )}
                             {threadFooter}
                         </div>
                     </div>
