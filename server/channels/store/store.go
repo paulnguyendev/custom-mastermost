@@ -1187,6 +1187,7 @@ type ContentFlaggingStore interface {
 type ReadReceiptStore interface {
 	InvalidateReadReceiptForPostsCache(postID string)
 	Save(rctx request.CTX, receipt *model.ReadReceipt) (*model.ReadReceipt, error)
+	SaveMultiple(rctx request.CTX, receipts []*model.ReadReceipt) ([]*model.ReadReceipt, error)
 	Update(rctx request.CTX, receipt *model.ReadReceipt) (*model.ReadReceipt, error)
 	Delete(rctx request.CTX, postID, userID string) error
 	DeleteByPost(rctx request.CTX, postID string) error

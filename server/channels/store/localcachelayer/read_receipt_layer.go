@@ -81,6 +81,17 @@ func (s LocalCacheReadReceiptStore) Save(rctx request.CTX, receipt *model.ReadRe
 	return s.ReadReceiptStore.Save(rctx, receipt)
 }
 
+func (s LocalCacheReadReceiptStore) SaveMultiple(rctx request.CTX, receipts []*model.ReadReceipt) ([]*model.ReadReceipt, error) {
+	defer func() {
+		// Invalidate cache for all saved receipts
+		for _, receipt := range receipts {
+			s.rootStore.doInvalidateCacheCluster(s.rootStore.readReceiptCache, fmt.Sprintf("%s:%s", receipt.PostID, receipt.UserID), nil)
+			s.rootStore.doInvalidateCacheCluster(s.rootStore.readReceiptPostReadersCache, receipt.PostID, nil)
+		}
+	}()
+	return s.ReadReceiptStore.SaveMultiple(rctx, receipts)
+}
+
 func (s LocalCacheReadReceiptStore) Update(rctx request.CTX, receipt *model.ReadReceipt) (*model.ReadReceipt, error) {
 	defer func() {
 		s.rootStore.doInvalidateCacheCluster(s.rootStore.readReceiptCache, fmt.Sprintf("%s:%s", receipt.PostID, receipt.UserID), nil)

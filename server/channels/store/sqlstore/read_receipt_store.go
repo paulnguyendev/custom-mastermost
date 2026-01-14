@@ -82,6 +82,49 @@ func (s *SqlReadReceiptStore) Save(rctx request.CTX, receipt *model.ReadReceipt)
 	return receipt, nil
 }
 
+// SaveMultiple saves multiple read receipts at once using batch insert
+// It uses INSERT ... ON CONFLICT DO NOTHING to skip duplicates
+func (s *SqlReadReceiptStore) SaveMultiple(rctx request.CTX, receipts []*model.ReadReceipt) ([]*model.ReadReceipt, error) {
+	if len(receipts) == 0 {
+		return []*model.ReadReceipt{}, nil
+	}
+
+	// PreSave all receipts
+	for _, receipt := range receipts {
+		receipt.PreSave()
+	}
+
+	// Build batch insert query
+	query := s.getQueryBuilder().
+		Insert("ReadReceipts").
+		Columns(readReceiptSliceColumns()...)
+
+	for _, receipt := range receipts {
+		query = query.Values(
+			receipt.PostID,
+			receipt.UserID,
+			receipt.ChannelID,
+			receipt.SeenAt,
+			receipt.ExpireAt,
+		)
+	}
+
+	// Add ON CONFLICT DO NOTHING to skip duplicates
+	if s.DriverName() == model.DatabaseDriverPostgres {
+		query = query.Suffix("ON CONFLICT (PostId, UserId) DO NOTHING")
+	} else {
+		// MySQL uses ON DUPLICATE KEY UPDATE with a no-op
+		query = query.Suffix("ON DUPLICATE KEY UPDATE PostId=PostId")
+	}
+
+	_, err := s.GetMaster().ExecBuilder(query)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to batch save read receipts")
+	}
+
+	return receipts, nil
+}
+
 func (s *SqlReadReceiptStore) Update(rctx request.CTX, receipt *model.ReadReceipt) (*model.ReadReceipt, error) {
 	query := s.getQueryBuilder().
 		Update("ReadReceipts").

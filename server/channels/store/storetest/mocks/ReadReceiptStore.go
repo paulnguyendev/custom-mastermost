@@ -262,6 +262,36 @@ func (_m *ReadReceiptStore) Save(rctx request.CTX, receipt *model.ReadReceipt) (
 	return r0, r1
 }
 
+// SaveMultiple provides a mock function with given fields: rctx, receipts
+func (_m *ReadReceiptStore) SaveMultiple(rctx request.CTX, receipts []*model.ReadReceipt) ([]*model.ReadReceipt, error) {
+	ret := _m.Called(rctx, receipts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SaveMultiple")
+	}
+
+	var r0 []*model.ReadReceipt
+	var r1 error
+	if rf, ok := ret.Get(0).(func(request.CTX, []*model.ReadReceipt) ([]*model.ReadReceipt, error)); ok {
+		return rf(rctx, receipts)
+	}
+	if rf, ok := ret.Get(0).(func(request.CTX, []*model.ReadReceipt) []*model.ReadReceipt); ok {
+		r0 = rf(rctx, receipts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*model.ReadReceipt)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(request.CTX, []*model.ReadReceipt) error); ok {
+		r1 = rf(rctx, receipts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Update provides a mock function with given fields: rctx, receipt
 func (_m *ReadReceiptStore) Update(rctx request.CTX, receipt *model.ReadReceipt) (*model.ReadReceipt, error) {
 	ret := _m.Called(rctx, receipt)
